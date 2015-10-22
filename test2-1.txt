@@ -8,14 +8,14 @@ receive
 3 6 2.0
 report
 display
-use
+sell
 8
-use
+sell
 7
-use
+sell
 6
 skip
-use
+sell
 5
 display
 receive
@@ -27,9 +27,9 @@ receive
 report
 display
 skip
-use
+sell
 8
-use
+sell
 5
 display
 receive

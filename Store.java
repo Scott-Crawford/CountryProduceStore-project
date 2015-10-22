@@ -3,21 +3,24 @@ import java.util.Scanner;
 @SuppressWarnings("unchecked")
 public class Store
 {
-    int globalClock;
-    StackInterface produceStack;
-    StackInterface tempStack;
-    Scanner info;
-    Crate counterCrate;
-    boolean useFile;
-    int moves;
-    int totalMoves;
-    int recentCrates;
-    int totalCrates;
-    double recentProduceCost;
-    double totalProduceCost;
-    double recentTotalCost;
-    double totalCost;
+    int globalClock; //records date
+    StackInterface produceStack; //first stack, holding most produce
+    StackInterface tempStack; //temporary stack only for receiving crates
+    Scanner info; //scanner for reading a file or user input
+    Crate counterCrate; //holds Crate of the current crate in use
+    boolean useFile; //records if a file is in use or not
+    int moves; //records moves needed in most recent shipment
+    int totalMoves; //records moves needed across all shipments
+    int recentCrates; //records number of crates received in most recent shipment
+    int totalCrates; //records number of crates received across all shipments
+    double recentProduceCost; //records cost of crates in most recent shipment
+    double totalProduceCost; //records cost of crates across all shipments
+    double recentTotalCost; //records cost of labor and crates in most recent shipment
+    double totalCost; //records cost of labor and crates across all shipments
     
+    /**creates a stores and sets the variables
+     * @param Scanner for either user input or reading a file, boolean to tell if it a file is being used
+     */
     public Store(Scanner input,boolean x){
         globalClock=0;
         produceStack=new LinkedStack<Crate>();
@@ -34,11 +37,15 @@ public class Store
         totalCost=0;
     }
     
+    /**receives a number of crates and sorts them into the stack
+     * @param int of number of crates being received
+     * @returns String everything printed to System
+     */
     public String receive(int num){
         String out="Receiving "+num+" crates of produce.";
-        if(!useFile){
-            System.out.println("Receiving "+num+" crates of produce.");
-        }
+          
+        System.out.println("Receiving "+num+" crates of produce.");
+        
         int a;
         int b;
         double c;
@@ -64,23 +71,28 @@ public class Store
             c=info.nextDouble();
             temp=new Crate(a,b,c);
             recentProduceCost=recentProduceCost+temp.getCost();
-            stackMoving(temp);
+            stackMoving(temp);//sends it to the stack
         }
         tempToTop();
         recentTotalCost=recentProduceCost+(double)moves;
         totalMoves=totalMoves+moves;
         totalProduceCost=totalProduceCost+recentProduceCost;
         totalCost=totalCost+recentTotalCost;
+        System.out.println("\r\n");
         return out;
     }
    
+    /**removes the number of produce from the counter crate to be sold, replaces crate if used up, indicates if store is out of produce
+     * @param int of number of crates being sold
+     * @returns String everything printed to System
+     */
     public String sell(int x){
         String out=x+" produce needed for that order.";
         Pair temp=checkCounterCrate();
-        if((boolean)temp.getFirst()){
+        if((boolean)temp.getFirst()){//gets true or false if there's a counter crate
             if(!("".equals(temp.getSecond()))){
-                String tempStr=(String)temp.getSecond();
-                out=out+"\r\n"+tempStr;
+                String tempStr="\r\n"+(String)temp.getSecond();
+                out=out+tempStr;
             }
             if(x<=counterCrate.getRemaining()){
                 for(int i=0;i<x;i++){
@@ -92,53 +104,60 @@ public class Store
                 out=out+crateSellRotate(x);
             }
         }
-        else{
-            System.out.println("Sorry, we don't have that much produce. We have given you everything we have.");
+        else{//if there is no crates left
+            out=out+"\r\nThe store is out of produce. There was "+x+" produce left in the order.";
         }
-        if(!useFile){
-                System.out.print(out);
-            }
+        
+        System.out.print(out);
+        System.out.println("\r\n");
         return out;
     }
     
+     /**gives a printout of the crate on the counter and the crates in the stack
+     * @returns String everything printed to System, in this case the list
+     */
     public String display(){
         String out="";
-        if(counterCrate!=null){
-            if(!useFile){
-                System.out.print("Current crate: ");
-                System.out.println(counterCrate);
-            }
+        if(counterCrate!=null){//only if there is a crate on the counter
+            
+            System.out.print("\r\nCurrent crate: ");
+            System.out.println(counterCrate);
+            
             out=out+"Current crate: "+counterCrate;
         }
         if(!produceStack.isEmpty()){
-            if(!useFile){
-                System.out.println("Stack crates (top to bottom):");
-            }
+            
+            System.out.println("Stack crates (top to bottom):");
+            
             out=out+"\r\nStack crates (top to bottom):";
         }
         else{
-            if(!useFile){
-                System.out.println("No crates in the stack - please reorder!");
-            }
+            
+            System.out.println("No crates in the stack - please reorder!");
+            
             out=out+"\r\nNo crates in the stack - please reorder!";
         }
-        while(!produceStack.isEmpty()){
+        while(!produceStack.isEmpty()){//lists the crates by popping them into the temp and then putting the back when done
             tempStack.push(produceStack.pop());
-            if(!useFile){
-                System.out.println(tempStack.peek());
-            }
+            
+            System.out.println(tempStack.peek());
+            
             out=out+"\r\n"+tempStack.peek();
         }
+        System.out.println("\r\n");
         tempToTop();
         return out;
     }
     
+    /**moves the day counter up one and checks for expired crates
+     * @returns String everything printed to System, including things that expired
+     */
     public String skip(){
         String out="";
         globalClock++;
-        if(!useFile){
-            System.out.println("It is now day "+globalClock+".");
-        }
+        
+        System.out.println("It is now day "+globalClock+".");
+        
         out="It is now day "+globalClock+".";
         Pair temp=checkCounterCrate();
         if((boolean)temp.getFirst()){
@@ -147,23 +166,27 @@ public class Store
                 out=out+"\r\n"+tempStr;
             }
             if(checkExp(counterCrate)){
-                if(!useFile){
-                    System.out.println("Current crate: "+counterCrate+" is expired!");
-                }
+            
+                System.out.println("Current crate: "+counterCrate+" is expired!");
+                
                 out=out+"\r\nCurrent crate: "+counterCrate+" is expired!";
                 counterCrate=null;
             }
         }
         while(!produceStack.isEmpty()&&checkExp((Crate)produceStack.peek())){
             Crate ex=(Crate)produceStack.pop();
-            if(!useFile){
-                System.out.println("Top crate: "+ex+" is expired!");
-            }
+            
+            System.out.println("Top crate: "+ex+" is expired!");
+            
             out=out+"\r\nTop crate: "+ex+" is expired!";
         }
+        System.out.println("\r\n");
         return out;
     }
     
+    /**gives a printout of the most recent shipment and all shipments, including cost of crates and labor
+     * @returns String everything printed to System, in this case the report
+     */
     public String report(){
         String out="Country Produce Store Financial Statement:";
         out=out+"\r\n\tMost Recent Shipment:";
@@ -180,13 +203,16 @@ public class Store
         out=out+"\r\n\t\tLabor cost: "+(double)totalMoves;
         out=out+"\r\n\t\t------------------------";
         out=out+"\r\n\t\tTotal Cost: "+totalCost;
-        if(!useFile){
-            System.out.println(out);
-        }
+        
+        System.out.println(out);
+        System.out.println("\r\n");
         return out;
     }
     
-    public boolean checkExp(Crate a){
+    /**checks if crates are expired
+     * @returns true if crate is expired, false if not
+     */
+    private boolean checkExp(Crate a){
         if(a.getDate()<globalClock){
             return true;
         }
@@ -195,34 +221,40 @@ public class Store
         }
     }
     
-    public void stackMoving(Crate temp){
+    /**moves the crates onto the stacks. checks if crate is newer than crates on the main stack or older than ones on the temp stack and places them where they go
+     * @param Crate to be placed on the stack
+     */
+    private void stackMoving(Crate temp){
         if((produceStack.isEmpty()||0>=temp.compareTo((Crate)produceStack.peek()))&&(tempStack.isEmpty()||0<=temp.compareTo((Crate)tempStack.peek()))){
                 moves++;
                 produceStack.push(temp);   
-            }
-            else if(0<temp.compareTo((Crate)produceStack.peek())){
+        }
+        else if(0<temp.compareTo((Crate)produceStack.peek())){
                 moves++;
                 tempStack.push(produceStack.pop());
                 stackMoving(temp);
-            }
-            else if(0>temp.compareTo((Crate)tempStack.peek())){
+        }
+        else if(0>temp.compareTo((Crate)tempStack.peek())){
                 moves++;
                 produceStack.push(tempStack.pop());
                 stackMoving(temp);  
-            }
-            else{
+        }
+        else{
                 moves++;
                 produceStack.push(temp);
-            }
+        }
     }
     
-    public String crateSellRotate(int x){
+    /**rotates through the stack if the current crate cannot fulfill the order on its own
+     * @param int of produce to be sold
+     */
+    private String crateSellRotate(int x){
         String out="";
         Pair temp=checkCounterCrate();
         if((boolean)temp.getFirst()){
             if(!("".equals(temp.getSecond()))){
                 String tempStr=(String)temp.getSecond();
-                out=out+"\r\n"+tempStr;
+                out=out+tempStr;
             }
             if(x>counterCrate.getRemaining()){
                 int r=counterCrate.getRemaining();
@@ -231,7 +263,7 @@ public class Store
                 }
                 out=out+"\r\n"+r+" produce used from current crate.";
                 int m=x-r;
-                out=out+"\r\n"+crateSellRotate(m);
+                out=out+"\r\n"+crateSellRotate(m);//recursion
                 
             }
             else if(x<=counterCrate.getRemaining()){
@@ -241,17 +273,25 @@ public class Store
                 out=out+"\r\n"+x+" produce used from current crate.";
             }
         }
+        else{
+            out=out+"\r\nThe Store is out of produce. There was "+x+" produce left in the order.";
+        }
         return out;
     }
     
-    public void tempToTop(){
+    /**
+     * moves the temp stack to the top of the produce stack one at a time
+     */
+    private void tempToTop(){
         while(!tempStack.isEmpty()){
             moves++;
             produceStack.push(tempStack.pop());
         }
     }
-    
-    public Pair checkCounterCrate(){
+    /**checks if there is a crate on the counter or if it can be replaced
+     * @return Pair of boolean and String, true if there is a crate or if it can be replaced, false if it can't, and a String for getting crate
+     */
+    private Pair checkCounterCrate(){
         Pair x=new Pair<Boolean,String>(true,"");
         if(counterCrate==null||counterCrate.isEmpty()){
             if(produceStack.isEmpty()){
@@ -260,9 +300,7 @@ public class Store
             }
             else{
                 counterCrate=(Crate)produceStack.pop();
-                if(!useFile){
-                    System.out.println("Getting crate: "+counterCrate);
-                }
+                
                 x.changeFirst(true);
                 x.changeSecond("Getting crate: "+counterCrate);
                 return x;
